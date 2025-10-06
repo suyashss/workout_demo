@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>35‑Minute Dumbbell Superset Timer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #131a33;
+      --muted: #8ca0ff;
+      --text: #ecf0ff;
+      --accent: #71e5bd;
+      --danger: #ff7b7b;
+      --warn: #ffd36b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1000px 600px at 10% -10%, #1d2450, var(--bg));
+      color: var(--text);
+    }
+    .container { max-width: 980px; margin: 0 auto; padding: 24px; }
+    header { display:flex; align-items:center; gap:12px; margin-bottom: 16px; }
+    h1 { font-size: 28px; margin:0; letter-spacing: 0.2px; }
+    .card {
+      background: linear-gradient(180deg, #17214a, var(--card));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      border-radius: 16px; padding: 16px;
+    }
+    .grid { display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media (min-width: 920px){ .grid { grid-template-columns: 1.2fr 0.8fr; } }
+
+    .row { display:flex; gap:12px; flex-wrap: wrap; align-items:center; }
+    .seg-name { font-weight: 700; font-size: 18px; }
+    .muted { color: var(--muted); opacity: 0.9; }
+    .pill { padding: 6px 10px; border-radius: 99px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08);}
+
+    .controls { display:flex; gap:10px; flex-wrap: wrap; }
+    button {
+      background: #2a356d; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
+      padding: 12px 16px; border-radius: 12px; font-weight: 700; letter-spacing: 0.3px;
+      cursor: pointer; transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    }
+    button:hover { transform: translateY(-1px); background:#334092; }
+    button:active { transform: translateY(1px); }
+    .btn-primary { background: #4352b8; }
+    .btn-accent { background: #1f8a68; }
+    .btn-warn { background: #8a661f; }
+    .btn-danger { background: #7a2e2e; }
+
+    select, input[type="checkbox"] { accent-color: var(--accent); }
+    select {
+      background: #1b2450; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px; border-radius: 10px; font-weight:600; letter-spacing: 0.2px;
+    }
+    label { display:flex; align-items:center; gap:8px; }
+
+    .timer {
+      display:grid; gap: 12px; grid-template-columns: 1fr; align-items: start;
+    }
+    .time-display {
+      display:flex; align-items:baseline; gap: 12px;
+    }
+    .big { font-size: 58px; font-weight: 800; letter-spacing: 1px; }
+    .unit { font-size: 16px; opacity: 0.8; }
+
+    .progress-wrap { background: rgba(255,255,255,0.07); height: 16px; border-radius: 10px; overflow: hidden; border:1px solid rgba(255,255,255,0.08); }
+    .progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #7ae3ff); transition: width .2s linear; }
+
+    .stack { display:flex; flex-direction: column; gap:8px; }
+    .line { display:flex; align-items:center; justify-content: space-between; gap:8px; }
+
+    .badge { padding: 6px 10px; border-radius: 10px; font-weight: 700; }
+    .badge.work { background: rgba(113,229,189,0.15); border:1px solid rgba(113,229,189,0.35); }
+    .badge.rest { background: rgba(255,211,107,0.15); border:1px solid rgba(255,211,107,0.35); }
+    .badge.other { background: rgba(140,160,255,0.15); border:1px solid rgba(140,160,255,0.35); }
+
+    .list { display:flex; flex-direction:column; gap:10px; }
+    .list .item { display:flex; gap:10px; align-items: center; }
+    .dot { width:10px; height:10px; border-radius:50%; background: var(--muted); opacity: 0.9; }
+
+    .small { font-size: 13px; opacity: 0.9; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .hr { height:1px; background: rgba(255,255,255,0.08); margin: 8px 0; border: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4h10v3H7V4Zm-3 7h16v3H4v-3Zm3 7h10v3H7v-3Z" fill="#71e5bd"/></svg>
+      <h1>35‑Minute Dumbbell Superset Timer</h1>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="row" style="justify-content: space-between; gap: 16px;">
+          <div class="row" style="gap:12px;">
+            <label>
+              <span class="muted">Plan</span>
+              <select id="planSelect"></select>
+            </label>
+            <label title="Adds a short conditioning block at the end (≈ 3–4 min on Day 1, 2 min on Day 2).">
+              <input type="checkbox" id="finisherToggle" checked>
+              <span class="muted">Include Finisher</span>
+            </label>
+          </div>
+          <div class="controls">
+            <button id="startBtn" class="btn-accent">▶ Start</button>
+            <button id="pauseBtn" class="btn-warn">⏸ Pause</button>
+            <button id="resetBtn" class="btn-danger">⟲ Reset</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="timer">
+          <div class="stack">
+            <div class="line">
+              <div class="seg-name" id="currentTitle">Warm‑up</div>
+              <div class="badge other" id="phaseBadge">Other</div>
+            </div>
+            <div class="time-display">
+              <div class="big mono" id="timeLeft">05:00</div>
+              <div class="unit">remaining</div>
+            </div>
+            <div class="progress-wrap"><div id="progressBar" class="progress"></div></div>
+            <div class="line small">
+              <div>Next: <span id="nextTitle" class="muted">Loading…</span></div>
+              <div class="muted">Segment <span id="segIndex">1</span>/<span id="segTotal">—</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="stack">
+          <div class="row" style="justify-content: space-between;">
+            <div class="muted">Today’s Recipe</div>
+            <div class="pill mono" id="totalTime">00:00 / 35:00</div>
+          </div>
+          <div class="list" id="segmentList"></div>
+        </div>
+      </aside>
+    </div>
+
+    <p class="small muted" style="margin-top:16px">Tip: Volume on for gentle beeps. Use Start/Pause anytime. Switching plans automatically resets the timer.</p>
+  </div>
+
+  <audio id="beepShort"></audio>
+  <audio id="beepLong"></audio>
+
+  <script>
+    // ---- Audio (simple generated tones) ----
+    const shortBeep = new Audio();
+    const longBeep = new Audio();
+    function tone(duration=150, frequency=880, type='sine', vol=0.2) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type; o.frequency.value = frequency; g.gain.value = vol; o.connect(g); g.connect(ctx.destination); o.start();
+      setTimeout(()=>{ o.stop(); ctx.close(); }, duration);
+    }
+
+    // ---- Plans ----
+    function segment(label, seconds, kind='other') { return { label, seconds, kind }; }
+
+    // Helper to build 1 superset block: 3 rounds of (A 40s, Rest 20s, B 40s, Rest 20s)
+    function supersetBlock(aName, bName, work=40, rest=20) {
+      const segs = [];
+      for (let r=1; r<=3; r++) {
+        segs.push(segment(`${aName} — Round ${r}`, work, 'work'));
+        segs.push(segment(`Rest`, rest, 'rest'));
+        segs.push(segment(`${bName} — Round ${r}`, work, 'work'));
+        if (r<3) segs.push(segment(`Rest`, rest, 'rest'));
+      }
+      return segs;
+    }
+
+    function transition(seconds=30) { return [segment(`Transition / Setup`, seconds, 'other')]; }
+
+    // Day 1 plan
+    function planDay1(includeFinisher=true){
+      const segs = [];
+      segs.push(segment('Warm‑up', 5*60, 'other'));
+      segs.push(...supersetBlock('Front Squat', 'Romanian Deadlift'));
+      segs.push(...transition(30));
+      segs.push(...supersetBlock('Chest Press', 'One‑Arm Row'));
+      segs.push(...transition(30));
+      segs.push(...supersetBlock('Arnold Press', 'Core V Exercise'));
+      if (includeFinisher) {
+        segs.push(...transition(10));
+        // Finisher: 2 rounds → (Swings 30s, 10s, Side Plank L 30s, 10s, Side Plank R 30s, 10s)
+        for (let r=1; r<=2; r++){
+          segs.push(segment(`Finisher R${r}: KB Swings`, 30, 'work'));
+          segs.push(segment(`Transition`, 10, 'rest'));
+          segs.push(segment(`Finisher R${r}: Side Plank (L)`, 30, 'work'));
+          segs.push(segment(`Transition`, 10, 'rest'));
+          segs.push(segment(`Finisher R${r}: Side Plank (R)`, 30, 'work'));
+          if (r<2) segs.push(segment(`Transition`, 10, 'rest'));
+        }
+      }
+      return segs;
+    }
+
+    // Day 2 plan
+    function planDay2(includeFinisher=true){
+      const segs = [];
+      segs.push(segment('Warm‑up', 5*60, 'other'));
+      segs.push(...supersetBlock('Walking Lunge', 'Single‑Leg Squat to Bench'));
+      segs.push(...transition(30));
+      segs.push(...supersetBlock('Tricep Pulldown', 'Bicep Curl'));
+      segs.push(...transition(30));
+      segs.push(...supersetBlock('KB Deadlift', 'Side Plank with Arm Rotations'));
+      if (includeFinisher) {
+        segs.push(...transition(10));
+        // Optional quick 2‑min circuit (approx)
+        segs.push(segment('Finisher: Bodyweight Squats', 40, 'work'));
+        segs.push(segment('Transition', 10, 'rest'));
+        segs.push(segment('Finisher: Push‑ups', 30, 'work'));
+        segs.push(segment('Transition', 10, 'rest'));
+        segs.push(segment('Finisher: Swings / Rows', 40, 'work'));
+      }
+      return segs;
+    }
+
+    const plans = {
+      'Day 1 — Strength & Core': planDay1,
+      'Day 2 — Conditioning & Balance': planDay2,
+    };
+
+    // ---- State ----
+    let currentPlanName = Object.keys(plans)[0];
+    let segments = [];
+    let segIdx = 0;
+    let remaining = 0; // seconds in current segment
+    let running = false;
+    let timer = null;
+    let startedAt = null;
+    let totalElapsed = 0; // seconds across the whole session
+
+    // ---- DOM ----
+    const planSelect = document.getElementById('planSelect');
+    const finisherToggle = document.getElementById('finisherToggle');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const currentTitle = document.getElementById('currentTitle');
+    const nextTitle = document.getElementById('nextTitle');
+    const phaseBadge = document.getElementById('phaseBadge');
+    const timeLeft = document.getElementById('timeLeft');
+    const segIndex = document.getElementById('segIndex');
+    const segTotal = document.getElementById('segTotal');
+    const progressBar = document.getElementById('progressBar');
+    const segmentList = document.getElementById('segmentList');
+    const totalTime = document.getElementById('totalTime');
+
+    // Populate select
+    Object.keys(plans).forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name; planSelect.appendChild(opt);
+    });
+
+    function fmt(s){ const m=Math.floor(s/60), sec = s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+
+    function buildSegments(){
+      const withFinisher = finisherToggle.checked;
+      segments = plans[currentPlanName](withFinisher);
+      segIdx = 0;
+      remaining = segments[0].seconds;
+      totalElapsed = 0;
+      updateUI();
+      renderList();
+    }
+
+    function totalDuration(){ return segments.reduce((a,b)=>a+b.seconds,0); }
+
+    function updateUI(){
+      const seg = segments[segIdx] || {label:'Done', seconds:0, kind:'other'};
+      currentTitle.textContent = seg.label;
+      phaseBadge.textContent = seg.kind === 'work' ? 'Work' : (seg.kind === 'rest' ? 'Rest' : 'Other');
+      phaseBadge.className = 'badge ' + (seg.kind==='work'?'work':seg.kind==='rest'?'rest':'other');
+      timeLeft.textContent = fmt(remaining);
+      segIndex.textContent = Math.min(segIdx+1, segments.length);
+      segTotal.textContent = segments.length;
+      const done = segments.slice(0, segIdx).reduce((a,b)=>a+b.seconds,0) + (segments[segIdx]?.seconds - remaining);
+      const pct = Math.max(0, Math.min(100, (done/Math.max(1,totalDuration()))*100));
+      progressBar.style.width = pct + '%';
+      const next = segments[segIdx+1];
+      nextTitle.textContent = next ? next.label + ' (' + fmt(next.seconds) + ')' : 'Complete';
+      totalTime.textContent = `${fmt(done)} / ${fmt(totalDuration())}`;
+
+      // Highlight current in list
+      Array.from(segmentList.children).forEach((el,i)=>{
+        el.style.opacity = i===segIdx ? '1' : (i<segIdx ? 0.45 : 0.9);
+        el.style.borderLeft = i===segIdx ? '4px solid var(--accent)' : '4px solid transparent';
+        el.style.background = i===segIdx ? 'rgba(113,229,189,0.08)' : 'transparent';
+      });
+    }
+
+    function renderList(){
+      segmentList.innerHTML = '';
+      segments.forEach((s,i)=>{
+        const row = document.createElement('div');
+        row.className = 'item';
+        const dot = document.createElement('div'); dot.className = 'dot'; row.appendChild(dot);
+        const text = document.createElement('div');
+        text.innerHTML = `<div style="font-weight:700">${s.label}</div><div class="small muted">${fmt(s.seconds)} · ${s.kind.toUpperCase()}</div>`;
+        row.appendChild(text);
+        segmentList.appendChild(row);
+      });
+    }
+
+    function tick(){
+      if (!running) return;
+      remaining -= 1; totalElapsed += 1;
+      if (remaining <= 0){
+        // End-of-segment beep (different for work/rest)
+        tone(180, segments[segIdx]?.kind==='work'? 1046:784, 'sine', 0.25);
+        segIdx += 1;
+        if (segIdx >= segments.length){
+          running = false; clearInterval(timer); updateUI();
+          tone(500, 660, 'sine', 0.3); setTimeout(()=>tone(600, 880, 'sine', 0.3), 100);
+          return;
+        }
+        remaining = segments[segIdx].seconds;
+      }
+      updateUI();
+    }
+
+    function start(){ if (running) return; running = true; timer = setInterval(tick, 1000); }
+    function pause(){ running = false; clearInterval(timer); }
+    function reset(){ pause(); buildSegments(); }
+
+    // Events
+    planSelect.addEventListener('change', (e)=>{ currentPlanName = e.target.value; reset(); });
+    finisherToggle.addEventListener('change', reset);
+    startBtn.addEventListener('click', start);
+    pauseBtn.addEventListener('click', pause);
+    resetBtn.addEventListener('click', reset);
+
+    // Init
+    planSelect.value = currentPlanName;
+    buildSegments();
+  </script>
+</body>
+</html>

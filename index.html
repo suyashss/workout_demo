@@ -168,9 +168,9 @@
     function segment(label, seconds, kind='other') { return { label, seconds, kind }; }
 
     // Helper to build 1 superset block: 3 rounds of (A 40s, Rest 20s, B 40s, Rest 20s)
-    function supersetBlock(aName, bName, work=40, rest=20) {
+    function supersetBlock(aName, bName, work=60, rest=30) {
       const segs = [];
-      for (let r=1; r<=3; r++) {
+      for (let r=1; r<=2; r++) {
         segs.push(segment(`${aName} — Round ${r}`, work, 'work'));
         segs.push(segment(`Rest`, rest, 'rest'));
         segs.push(segment(`${bName} — Round ${r}`, work, 'work'));

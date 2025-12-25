@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>35‑Minute Dumbbell Superset Timer</title>
+  <title>≈35‑Minute Superset Timer (Home + Gym)</title>
   <style>
     :root {
       --bg: #0b1020;
@@ -23,6 +23,7 @@
     .container { max-width: 980px; margin: 0 auto; padding: 24px; }
     header { display:flex; align-items:center; gap:12px; margin-bottom: 16px; }
     h1 { font-size: 28px; margin:0; letter-spacing: 0.2px; }
+
     .card {
       background: linear-gradient(180deg, #17214a, var(--card));
       border: 1px solid rgba(255,255,255,0.08);
@@ -33,38 +34,34 @@
     @media (min-width: 920px){ .grid { grid-template-columns: 1.2fr 0.8fr; } }
 
     .row { display:flex; gap:12px; flex-wrap: wrap; align-items:center; }
-    .seg-name { font-weight: 700; font-size: 18px; }
-    .muted { color: var(--muted); opacity: 0.9; }
+    .seg-name { font-weight: 800; font-size: 18px; }
+    .muted { color: var(--muted); opacity: 0.92; }
     .pill { padding: 6px 10px; border-radius: 99px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08);}
 
     .controls { display:flex; gap:10px; flex-wrap: wrap; }
     button {
       background: #2a356d; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
-      padding: 12px 16px; border-radius: 12px; font-weight: 700; letter-spacing: 0.3px;
+      padding: 12px 16px; border-radius: 12px; font-weight: 800; letter-spacing: 0.3px;
       cursor: pointer; transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
       box-shadow: 0 4px 14px rgba(0,0,0,0.25);
     }
     button:hover { transform: translateY(-1px); background:#334092; }
     button:active { transform: translateY(1px); }
-    .btn-primary { background: #4352b8; }
     .btn-accent { background: #1f8a68; }
     .btn-warn { background: #8a661f; }
     .btn-danger { background: #7a2e2e; }
 
     select, input[type="checkbox"] { accent-color: var(--accent); }
-    select {
+    select, input[type="number"] {
       background: #1b2450; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
-      padding: 10px 12px; border-radius: 10px; font-weight:600; letter-spacing: 0.2px;
+      padding: 10px 12px; border-radius: 10px; font-weight:700; letter-spacing: 0.2px;
     }
+    input[type="number"] { width: 110px; }
     label { display:flex; align-items:center; gap:8px; }
 
-    .timer {
-      display:grid; gap: 12px; grid-template-columns: 1fr; align-items: start;
-    }
-    .time-display {
-      display:flex; align-items:baseline; gap: 12px;
-    }
-    .big { font-size: 58px; font-weight: 800; letter-spacing: 1px; }
+    .timer { display:grid; gap: 12px; grid-template-columns: 1fr; align-items: start; }
+    .time-display { display:flex; align-items:baseline; gap: 12px; }
+    .big { font-size: 58px; font-weight: 900; letter-spacing: 1px; }
     .unit { font-size: 16px; opacity: 0.8; }
 
     .progress-wrap { background: rgba(255,255,255,0.07); height: 16px; border-radius: 10px; overflow: hidden; border:1px solid rgba(255,255,255,0.08); }
@@ -73,16 +70,16 @@
     .stack { display:flex; flex-direction: column; gap:8px; }
     .line { display:flex; align-items:center; justify-content: space-between; gap:8px; }
 
-    .badge { padding: 6px 10px; border-radius: 10px; font-weight: 700; }
+    .badge { padding: 6px 10px; border-radius: 10px; font-weight: 800; }
     .badge.work { background: rgba(113,229,189,0.15); border:1px solid rgba(113,229,189,0.35); }
     .badge.rest { background: rgba(255,211,107,0.15); border:1px solid rgba(255,211,107,0.35); }
     .badge.other { background: rgba(140,160,255,0.15); border:1px solid rgba(140,160,255,0.35); }
 
     .list { display:flex; flex-direction:column; gap:10px; }
-    .list .item { display:flex; gap:10px; align-items: center; }
-    .dot { width:10px; height:10px; border-radius:50%; background: var(--muted); opacity: 0.9; }
+    .list .item { display:flex; gap:10px; align-items:flex-start; padding: 8px 10px; border-radius: 12px; }
+    .dot { width:10px; height:10px; border-radius:50%; background: var(--muted); opacity: 0.9; margin-top: 6px; }
 
-    .small { font-size: 13px; opacity: 0.9; }
+    .small { font-size: 13px; opacity: 0.92; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
     .hr { height:1px; background: rgba(255,255,255,0.08); margin: 8px 0; border: none; }
   </style>
@@ -90,8 +87,10 @@
 <body>
   <div class="container">
     <header>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4h10v3H7V4Zm-3 7h16v3H4v-3Zm3 7h10v3H7v-3Z" fill="#71e5bd"/></svg>
-      <h1>35‑Minute Dumbbell Superset Timer</h1>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 4h10v3H7V4Zm-3 7h16v3H4v-3Zm3 7h10v3H7v-3Z" fill="#71e5bd"/>
+      </svg>
+      <h1>≈35‑Minute Superset Timer (Home + Gym)</h1>
     </header>
 
     <div class="grid">
@@ -102,11 +101,36 @@
               <span class="muted">Plan</span>
               <select id="planSelect"></select>
             </label>
-            <label title="Adds a short conditioning block at the end (≈ 3–4 min on Day 1, 2 min on Day 2).">
+
+            <label>
+              <span class="muted">Location</span>
+              <select id="locationSelect">
+                <option value="home">Home</option>
+                <option value="gym">Gym</option>
+              </select>
+            </label>
+
+            <label title="If knees feel cranky (especially at home), swaps lunges/single-leg squats to friendlier options.">
+              <input type="checkbox" id="kneeFriendlyToggle" checked>
+              <span class="muted">Knee‑Friendly</span>
+            </label>
+
+            <label title="Used to display scaling cues in the Home plan (ex: 15s + tempo to match your gym load).">
+              <span class="muted">Gym Bench (lb/hand)</span>
+              <input type="number" id="benchGymInput" value="25" min="0" step="5">
+            </label>
+
+            <label title="Used to display scaling cues in the Home plan (ex: 15 + band/pauses to match your gym load).">
+              <span class="muted">Gym Row (lb/hand)</span>
+              <input type="number" id="rowGymInput" value="25" min="0" step="5">
+            </label>
+
+            <label title="Adds a short conditioning block at the end (~4 min).">
               <input type="checkbox" id="finisherToggle" checked>
               <span class="muted">Include Finisher</span>
             </label>
           </div>
+
           <div class="controls">
             <button id="startBtn" class="btn-accent">▶ Start</button>
             <button id="pauseBtn" class="btn-warn">⏸ Pause</button>
@@ -122,11 +146,16 @@
               <div class="seg-name" id="currentTitle">Warm‑up</div>
               <div class="badge other" id="phaseBadge">Other</div>
             </div>
+
+            <div class="small muted" id="currentDetail"></div>
+
             <div class="time-display">
               <div class="big mono" id="timeLeft">05:00</div>
               <div class="unit">remaining</div>
             </div>
+
             <div class="progress-wrap"><div id="progressBar" class="progress"></div></div>
+
             <div class="line small">
               <div>Next: <span id="nextTitle" class="muted">Loading…</span></div>
               <div class="muted">Segment <span id="segIndex">1</span>/<span id="segTotal">—</span></div>
@@ -146,100 +175,279 @@
       </aside>
     </div>
 
-    <p class="small muted" style="margin-top:16px">Tip: Volume on for gentle beeps. Use Start/Pause anytime. Switching plans automatically resets the timer.</p>
+    <p class="small muted" style="margin-top:16px">
+      Tip: If the home weights feel light, keep reps smooth but add <b>3‑sec lowering</b> and a <b>1‑sec pause</b>.
+      If any knee move hurts (sharp pain), swap it.
+    </p>
   </div>
-
-  <audio id="beepShort"></audio>
-  <audio id="beepLong"></audio>
 
   <script>
     // ---- Audio (simple generated tones) ----
-    const shortBeep = new Audio();
-    const longBeep = new Audio();
     function tone(duration=150, frequency=880, type='sine', vol=0.2) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-      o.type = type; o.frequency.value = frequency; g.gain.value = vol; o.connect(g); g.connect(ctx.destination); o.start();
+      o.type = type; o.frequency.value = frequency; g.gain.value = vol;
+      o.connect(g); g.connect(ctx.destination); o.start();
       setTimeout(()=>{ o.stop(); ctx.close(); }, duration);
     }
 
-    // ---- Plans ----
-    function segment(label, seconds, kind='other') { return { label, seconds, kind }; }
+    // ---- Core helpers ----
+    function segment(label, seconds, kind='other', detail='') { return { label, seconds, kind, detail }; }
+    function ex(name, detail=''){ return { name, detail }; }
+    function transition(seconds=30, label='Transition / Setup') { return [segment(label, seconds, 'other', 'Set up quickly, sip water, adjust equipment.')]; }
 
-    // Helper to build 1 superset block: 3 rounds of (A 40s, Rest 20s, B 40s, Rest 20s)
-    function supersetBlock(aName, bName, work=60, rest=30) {
+    // 3 rounds of (A 60s, Rest 30s, B 60s, Rest 30s) with no rest after final B
+    function supersetBlock(a, b, work=60, rest=30, rounds=3) {
       const segs = [];
-      for (let r=1; r<=2; r++) {
-        segs.push(segment(`${aName} — Round ${r}`, work, 'work'));
-        segs.push(segment(`Rest`, rest, 'rest'));
-        segs.push(segment(`${bName} — Round ${r}`, work, 'work'));
-        if (r<3) segs.push(segment(`Rest`, rest, 'rest'));
+      for (let r=1; r<=rounds; r++) {
+        segs.push(segment(`${a.name} — Round ${r}`, work, 'work', a.detail));
+        segs.push(segment(`Rest`, rest, 'rest', 'Breathe, shake out, set up next move.'));
+        segs.push(segment(`${b.name} — Round ${r}`, work, 'work', b.detail));
+        if (r < rounds) segs.push(segment(`Rest`, rest, 'rest', 'Reset position, start next round strong.'));
       }
       return segs;
     }
 
-    function transition(seconds=30) { return [segment(`Transition / Setup`, seconds, 'other')]; }
+    // ---- Read settings ----
+    const locationSelect = document.getElementById('locationSelect');
+    const kneeFriendlyToggle = document.getElementById('kneeFriendlyToggle');
+    const benchGymInput = document.getElementById('benchGymInput');
+    const rowGymInput = document.getElementById('rowGymInput');
 
-    // Day 1 plan
-    function planDay1(includeFinisher=true){
+    function readCtx(){
+      return {
+        location: locationSelect.value, // 'home' | 'gym'
+        kneeFriendly: kneeFriendlyToggle.checked,
+        gymBench: Number(benchGymInput.value) || 0,
+        gymRow: Number(rowGymInput.value) || 0,
+        homeMaxDB: 15
+      };
+    }
+
+    // ---- Exercise selectors (adapt to Home equipment + Gym progress) ----
+    function warmup(ctx){
+      return ex(
+        'Warm‑up',
+        ctx.location === 'home'
+          ? '5 min: glute bridges, hip hinges, band lateral walks, gentle squat-to-chair'
+          : '5 min: easy cardio + dynamic mobility'
+      );
+    }
+
+    function frontSquat(ctx){
+      return ex(
+        'DB Front Squat',
+        ctx.location === 'home'
+          ? '2×15 lb front rack · 3s down + 1s pause (or goblet 15)'
+          : 'Choose challenging DB/KB · smooth reps'
+      );
+    }
+
+    function rdl(ctx){
+      return ex(
+        'DB Romanian Deadlift',
+        ctx.location === 'home'
+          ? '2×15 lb · 3s down · squeeze glutes at top'
+          : 'Heavier hinge · controlled reps'
+      );
+    }
+
+    function chestPress(ctx){
+      const gym = ctx.gymBench || 25;
+      if (ctx.location === 'gym'){
+        return ex('DB Bench Press', `Target: 2×${gym} lb · stop 1–2 reps shy of failure`);
+      }
+      const needsScale = gym > ctx.homeMaxDB;
+      return ex(
+        'DB Floor Press',
+        needsScale
+          ? `2×15 lb · 3s down + 1s pause (Gym: 2×${gym})`
+          : `2×${gym} lb · steady reps`
+      );
+    }
+
+    function oneArmRow(ctx){
+      const gym = ctx.gymRow || 25;
+      if (ctx.location === 'gym'){
+        return ex('One‑Arm DB Row', `${gym} lb · 2s squeeze at top`);
+      }
+      const needsScale = gym > ctx.homeMaxDB;
+      return ex(
+        'One‑Arm Row (DB + Band option)',
+        needsScale
+          ? `15 lb + band if possible · 2s squeeze (Gym: ${gym})`
+          : `${gym} lb · 2s squeeze`
+      );
+    }
+
+    function arnoldPress(ctx){
+      return ex(
+        'Arnold Press',
+        ctx.location === 'home'
+          ? '10–15 lb · keep ribs down · slow control'
+          : 'Moderate-heavy · clean reps'
+      );
+    }
+
+    function coreBlock(ctx){
+      return ex(
+        'Core: Dead Bug / Hollow',
+        ctx.location === 'home'
+          ? 'Ankle weights optional (1–2 lb/side) · slow + controlled'
+          : 'Controlled core work · no rushing'
+      );
+    }
+
+    // Day 2 swaps for knees at home
+    function lungeOrSwap(ctx){
+      if (ctx.location === 'gym' && !ctx.kneeFriendly){
+        return ex('Walking Lunge', 'Moderate DBs · tall torso · smooth steps');
+      }
+      return ex(
+        'Reverse Lunge / Split Squat',
+        '5–15 lb DBs · short stride, shin comfy · hold support if needed'
+      );
+    }
+
+    function singleLegSwap(ctx){
+      if (ctx.location === 'gym' && !ctx.kneeFriendly){
+        return ex('Single‑Leg Squat to Bench', 'Control down · light touch to bench');
+      }
+      return ex(
+        'Single‑Leg RDL (balance)',
+        '1×15 lb · hips square · reach back with free leg'
+      );
+    }
+
+    function triceps(ctx){
+      return ex(
+        ctx.location === 'gym' ? 'Cable Tricep Pressdown' : 'Band Tricep Pressdown',
+        ctx.location === 'gym'
+          ? 'Moderate-heavy · elbows pinned'
+          : 'Anchor band high · slow control · full lockout'
+      );
+    }
+
+    function biceps(ctx){
+      return ex(
+        'DB Bicep Curl',
+        ctx.location === 'home'
+          ? '10–15 lb · slow lowering · last 10s hold halfway'
+          : 'Moderate-heavy · clean reps'
+      );
+    }
+
+    function deadliftHinge(ctx){
+      return ex(
+        ctx.location === 'gym' ? 'KB Deadlift' : 'DB Sumo Deadlift / Hinge',
+        ctx.location === 'gym'
+          ? 'Go heavier than home · crisp bracing'
+          : '2×15 lb · add band if available · 3s down'
+      );
+    }
+
+    function sidePlankRot(ctx){
+      return ex(
+        'Side Plank + Reach/Rotate',
+        ctx.location === 'home'
+          ? 'Option: hold 5 lb DB · slow rotations'
+          : 'Controlled rotations · stay stacked'
+      );
+    }
+
+    function swingsOrHinge(ctx){
+      return ex(
+        ctx.location === 'gym' ? 'KB Swings' : 'DB Swings / Band Good‑Morning',
+        ctx.location === 'home'
+          ? '15 lb DB swing OR band hinge · snap hips, neutral back'
+          : 'Powerful hips · crisp reps'
+      );
+    }
+
+    function finisherCore(ctx){
+      return ex(
+        'Dead Bug (ankle weights optional)',
+        'Slow reps · exhale hard · keep low back down'
+      );
+    }
+
+    function finisherPull(ctx){
+      return ex(
+        ctx.location === 'gym' ? 'Face Pull / Row' : 'Band Row / Face Pull',
+        ctx.location === 'gym'
+          ? 'Cable/band · squeeze shoulder blades'
+          : 'Band · 2s squeeze · keep neck relaxed'
+      );
+    }
+
+    // ---- Plans ----
+    function planDay1(includeFinisher=true, ctx){
       const segs = [];
-      segs.push(segment('Warm‑up', 5*60, 'other'));
-      segs.push(...supersetBlock('Front Squat', 'Romanian Deadlift'));
+      segs.push(segment('Warm‑up', 5*60, 'other', warmup(ctx).detail));
+
+      segs.push(...supersetBlock(frontSquat(ctx), rdl(ctx)));
       segs.push(...transition(30));
-      segs.push(...supersetBlock('Chest Press', 'One‑Arm Row'));
+
+      segs.push(...supersetBlock(chestPress(ctx), oneArmRow(ctx)));
       segs.push(...transition(30));
-      segs.push(...supersetBlock('Arnold Press', 'Core V Exercise'));
+
+      segs.push(...supersetBlock(arnoldPress(ctx), coreBlock(ctx)));
+
       if (includeFinisher) {
-        segs.push(...transition(10));
-        // Finisher: 2 rounds → (Swings 30s, 10s, Side Plank L 30s, 10s, Side Plank R 30s, 10s)
+        segs.push(...transition(10, 'Quick Setup'));
+        // Finisher: 2 rounds → (Swings 30s, 10s, Side Plank L 30s, 10s, Side Plank R 30s, 10s between rounds)
         for (let r=1; r<=2; r++){
-          segs.push(segment(`Finisher R${r}: KB Swings`, 30, 'work'));
-          segs.push(segment(`Transition`, 10, 'rest'));
-          segs.push(segment(`Finisher R${r}: Side Plank (L)`, 30, 'work'));
-          segs.push(segment(`Transition`, 10, 'rest'));
-          segs.push(segment(`Finisher R${r}: Side Plank (R)`, 30, 'work'));
-          if (r<2) segs.push(segment(`Transition`, 10, 'rest'));
+          segs.push(segment(`Finisher R${r}: ${swingsOrHinge(ctx).name}`, 30, 'work', swingsOrHinge(ctx).detail));
+          segs.push(segment(`Transition`, 10, 'rest', 'Switch sides / set up.'));
+          segs.push(segment(`Finisher R${r}: Side Plank (L)`, 30, 'work', 'Stack hips/shoulders · breathe.'));
+          segs.push(segment(`Transition`, 10, 'rest', 'Switch sides.'));
+          segs.push(segment(`Finisher R${r}: Side Plank (R)`, 30, 'work', 'Stack hips/shoulders · breathe.'));
+          if (r<2) segs.push(segment(`Transition`, 10, 'rest', 'Shake out, start Round 2.'));
         }
       }
       return segs;
     }
 
-    // Day 2 plan
-    function planDay2(includeFinisher=true){
+    function planDay2(includeFinisher=true, ctx){
       const segs = [];
-      segs.push(segment('Warm‑up', 5*60, 'other'));
-      segs.push(...supersetBlock('Walking Lunge', 'Single‑Leg Squat to Bench'));
+      segs.push(segment('Warm‑up', 5*60, 'other', warmup(ctx).detail));
+
+      segs.push(...supersetBlock(lungeOrSwap(ctx), singleLegSwap(ctx)));
       segs.push(...transition(30));
-      segs.push(...supersetBlock('Tricep Pulldown', 'Bicep Curl'));
+
+      segs.push(...supersetBlock(triceps(ctx), biceps(ctx)));
       segs.push(...transition(30));
-      segs.push(...supersetBlock('KB Deadlift', 'Side Plank with Arm Rotations'));
+
+      segs.push(...supersetBlock(deadliftHinge(ctx), sidePlankRot(ctx)));
+
       if (includeFinisher) {
-        segs.push(...transition(10));
-        // Optional quick 2‑min circuit (approx)
-        segs.push(segment('Finisher: Bodyweight Squats', 40, 'work'));
-        segs.push(segment('Transition', 10, 'rest'));
-        segs.push(segment('Finisher: Push‑ups', 30, 'work'));
-        segs.push(segment('Transition', 10, 'rest'));
-        segs.push(segment('Finisher: Swings / Rows', 40, 'work'));
+        segs.push(...transition(10, 'Quick Setup'));
+        // Finisher: 2 rounds → 3 moves (3:50) + 10s setup = ~4:00
+        for (let r=1; r<=2; r++){
+          segs.push(segment(`Finisher R${r}: ${swingsOrHinge(ctx).name}`, 30, 'work', swingsOrHinge(ctx).detail));
+          segs.push(segment(`Transition`, 10, 'rest', 'Next move.'));
+          segs.push(segment(`Finisher R${r}: ${finisherCore(ctx).name}`, 30, 'work', finisherCore(ctx).detail));
+          segs.push(segment(`Transition`, 10, 'rest', 'Next move.'));
+          segs.push(segment(`Finisher R${r}: ${finisherPull(ctx).name}`, 30, 'work', finisherPull(ctx).detail));
+          if (r<2) segs.push(segment(`Transition`, 10, 'rest', 'Repeat.'));
+        }
       }
       return segs;
     }
 
     const plans = {
       'Day 1 — Strength & Core': planDay1,
-      'Day 2 — Conditioning & Balance': planDay2,
+      'Day 2 — Knee‑Friendly Conditioning': planDay2,
     };
 
     // ---- State ----
     let currentPlanName = Object.keys(plans)[0];
     let segments = [];
     let segIdx = 0;
-    let remaining = 0; // seconds in current segment
+    let remaining = 0;
     let running = false;
     let timer = null;
-    let startedAt = null;
-    let totalElapsed = 0; // seconds across the whole session
 
     // ---- DOM ----
     const planSelect = document.getElementById('planSelect');
@@ -249,6 +457,7 @@
     const resetBtn = document.getElementById('resetBtn');
 
     const currentTitle = document.getElementById('currentTitle');
+    const currentDetail = document.getElementById('currentDetail');
     const nextTitle = document.getElementById('nextTitle');
     const phaseBadge = document.getElementById('phaseBadge');
     const timeLeft = document.getElementById('timeLeft');
@@ -261,39 +470,53 @@
     // Populate select
     Object.keys(plans).forEach(name => {
       const opt = document.createElement('option');
-      opt.value = name; opt.textContent = name; planSelect.appendChild(opt);
+      opt.value = name; opt.textContent = name;
+      planSelect.appendChild(opt);
     });
 
-    function fmt(s){ const m=Math.floor(s/60), sec = s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
-
-    function buildSegments(){
-      const withFinisher = finisherToggle.checked;
-      segments = plans[currentPlanName](withFinisher);
-      segIdx = 0;
-      remaining = segments[0].seconds;
-      totalElapsed = 0;
-      updateUI();
-      renderList();
+    function fmt(s){
+      const m = Math.floor(s/60);
+      const sec = s % 60;
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     }
 
     function totalDuration(){ return segments.reduce((a,b)=>a+b.seconds,0); }
 
+    function buildSegments(){
+      const withFinisher = finisherToggle.checked;
+      const ctx = readCtx();
+
+      segments = plans[currentPlanName](withFinisher, ctx);
+      segIdx = 0;
+      remaining = segments[0].seconds;
+      updateUI();
+      renderList();
+    }
+
     function updateUI(){
-      const seg = segments[segIdx] || {label:'Done', seconds:0, kind:'other'};
+      const seg = segments[segIdx] || {label:'Done', seconds:0, kind:'other', detail:''};
+
       currentTitle.textContent = seg.label;
+      currentDetail.textContent = seg.detail || '';
+
       phaseBadge.textContent = seg.kind === 'work' ? 'Work' : (seg.kind === 'rest' ? 'Rest' : 'Other');
       phaseBadge.className = 'badge ' + (seg.kind==='work'?'work':seg.kind==='rest'?'rest':'other');
-      timeLeft.textContent = fmt(remaining);
+
+      timeLeft.textContent = fmt(Math.max(0, remaining));
       segIndex.textContent = Math.min(segIdx+1, segments.length);
       segTotal.textContent = segments.length;
-      const done = segments.slice(0, segIdx).reduce((a,b)=>a+b.seconds,0) + (segments[segIdx]?.seconds - remaining);
+
+      const segSeconds = segments[segIdx]?.seconds ?? 0;
+      const done = segments.slice(0, segIdx).reduce((a,b)=>a+b.seconds,0) + Math.max(0, segSeconds - remaining);
+
       const pct = Math.max(0, Math.min(100, (done/Math.max(1,totalDuration()))*100));
       progressBar.style.width = pct + '%';
+
       const next = segments[segIdx+1];
-      nextTitle.textContent = next ? next.label + ' (' + fmt(next.seconds) + ')' : 'Complete';
+      nextTitle.textContent = next ? `${next.label} (${fmt(next.seconds)})` : 'Complete';
+
       totalTime.textContent = `${fmt(done)} / ${fmt(totalDuration())}`;
 
-      // Highlight current in list
       Array.from(segmentList.children).forEach((el,i)=>{
         el.style.opacity = i===segIdx ? '1' : (i<segIdx ? 0.45 : 0.9);
         el.style.borderLeft = i===segIdx ? '4px solid var(--accent)' : '4px solid transparent';
@@ -306,24 +529,38 @@
       segments.forEach((s,i)=>{
         const row = document.createElement('div');
         row.className = 'item';
-        const dot = document.createElement('div'); dot.className = 'dot'; row.appendChild(dot);
+
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        row.appendChild(dot);
+
         const text = document.createElement('div');
-        text.innerHTML = `<div style="font-weight:700">${s.label}</div><div class="small muted">${fmt(s.seconds)} · ${s.kind.toUpperCase()}</div>`;
+        const detailLine = s.detail ? `<div class="small muted" style="margin-top:2px">${s.detail}</div>` : '';
+        text.innerHTML = `
+          <div style="font-weight:800">${s.label}</div>
+          ${detailLine}
+          <div class="small muted" style="margin-top:2px">${fmt(s.seconds)} · ${s.kind.toUpperCase()}</div>
+        `;
         row.appendChild(text);
+
         segmentList.appendChild(row);
       });
     }
 
     function tick(){
       if (!running) return;
-      remaining -= 1; totalElapsed += 1;
+      remaining -= 1;
+
       if (remaining <= 0){
-        // End-of-segment beep (different for work/rest)
-        tone(180, segments[segIdx]?.kind==='work'? 1046:784, 'sine', 0.25);
+        tone(180, segments[segIdx]?.kind==='work' ? 1046 : 784, 'sine', 0.25);
         segIdx += 1;
+
         if (segIdx >= segments.length){
-          running = false; clearInterval(timer); updateUI();
-          tone(500, 660, 'sine', 0.3); setTimeout(()=>tone(600, 880, 'sine', 0.3), 100);
+          running = false;
+          clearInterval(timer);
+          updateUI();
+          tone(500, 660, 'sine', 0.3);
+          setTimeout(()=>tone(600, 880, 'sine', 0.3), 100);
           return;
         }
         remaining = segments[segIdx].seconds;
@@ -338,6 +575,11 @@
     // Events
     planSelect.addEventListener('change', (e)=>{ currentPlanName = e.target.value; reset(); });
     finisherToggle.addEventListener('change', reset);
+    locationSelect.addEventListener('change', reset);
+    kneeFriendlyToggle.addEventListener('change', reset);
+    benchGymInput.addEventListener('change', reset);
+    rowGymInput.addEventListener('change', reset);
+
     startBtn.addEventListener('click', start);
     pauseBtn.addEventListener('click', pause);
     resetBtn.addEventListener('click', reset);

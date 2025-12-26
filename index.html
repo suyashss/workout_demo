@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>≈35‑Minute Superset Timer (Home + Gym)</title>
+  <title>Home Superset Timer (≈35–40 min)</title>
   <style>
     :root {
       --bg: #0b1020;
@@ -16,14 +16,14 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       background: radial-gradient(1000px 600px at 10% -10%, #1d2450, var(--bg));
       color: var(--text);
     }
     .container { max-width: 980px; margin: 0 auto; padding: 24px; }
     header { display:flex; align-items:center; gap:12px; margin-bottom: 16px; }
     h1 { font-size: 28px; margin:0; letter-spacing: 0.2px; }
-
     .card {
       background: linear-gradient(180deg, #17214a, var(--card));
       border: 1px solid rgba(255,255,255,0.08);
@@ -52,11 +52,10 @@
     .btn-danger { background: #7a2e2e; }
 
     select, input[type="checkbox"] { accent-color: var(--accent); }
-    select, input[type="number"] {
+    select {
       background: #1b2450; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
-      padding: 10px 12px; border-radius: 10px; font-weight:700; letter-spacing: 0.2px;
+      padding: 10px 12px; border-radius: 10px; font-weight:800; letter-spacing: 0.2px;
     }
-    input[type="number"] { width: 110px; }
     label { display:flex; align-items:center; gap:8px; }
 
     .timer { display:grid; gap: 12px; grid-template-columns: 1fr; align-items: start; }
@@ -90,7 +89,7 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M7 4h10v3H7V4Zm-3 7h16v3H4v-3Zm3 7h10v3H7v-3Z" fill="#71e5bd"/>
       </svg>
-      <h1>≈35‑Minute Superset Timer (Home + Gym)</h1>
+      <h1>Home Superset Timer (Mini‑Band Friendly)</h1>
     </header>
 
     <div class="grid">
@@ -102,32 +101,14 @@
               <select id="planSelect"></select>
             </label>
 
-            <label>
-              <span class="muted">Location</span>
-              <select id="locationSelect">
-                <option value="home">Home</option>
-                <option value="gym">Gym</option>
-              </select>
+            <label title="Adds a short conditioning block before arms.">
+              <input type="checkbox" id="finisherToggle">
+              <span class="muted">Include Conditioning Finisher</span>
             </label>
 
-            <label title="If knees feel cranky (especially at home), swaps lunges/single-leg squats to friendlier options.">
-              <input type="checkbox" id="kneeFriendlyToggle" checked>
-              <span class="muted">Knee‑Friendly</span>
-            </label>
-
-            <label title="Used to display scaling cues in the Home plan (ex: 15s + tempo to match your gym load).">
-              <span class="muted">Gym Bench (lb/hand)</span>
-              <input type="number" id="benchGymInput" value="25" min="0" step="5">
-            </label>
-
-            <label title="Used to display scaling cues in the Home plan (ex: 15 + band/pauses to match your gym load).">
-              <span class="muted">Gym Row (lb/hand)</span>
-              <input type="number" id="rowGymInput" value="25" min="0" step="5">
-            </label>
-
-            <label title="Adds a short conditioning block at the end (~4 min).">
-              <input type="checkbox" id="finisherToggle" checked>
-              <span class="muted">Include Finisher</span>
+            <label title="Adds 2 sets each at the end: Seated curls + triceps.">
+              <input type="checkbox" id="armsToggle" checked>
+              <span class="muted">End With Biceps + Triceps</span>
             </label>
           </div>
 
@@ -168,7 +149,7 @@
         <div class="stack">
           <div class="row" style="justify-content: space-between;">
             <div class="muted">Today’s Recipe</div>
-            <div class="pill mono" id="totalTime">00:00 / 35:00</div>
+            <div class="pill mono" id="totalTime">00:00 / 00:00</div>
           </div>
           <div class="list" id="segmentList"></div>
         </div>
@@ -176,8 +157,8 @@
     </div>
 
     <p class="small muted" style="margin-top:16px">
-      Tip: If the home weights feel light, keep reps smooth but add <b>3‑sec lowering</b> and a <b>1‑sec pause</b>.
-      If any knee move hurts (sharp pain), swap it.
+      Big-lift pacing tip (squat / RDL / deadlift): don’t rush to hit 12 reps in 60s. Aim <b>8–10 clean reps</b>,
+      then use leftover time for a <b>5–10s hold</b> (bottom of squat or hinge hold). Presses can stay slow + paused.
     </p>
   </div>
 
@@ -192,253 +173,187 @@
       setTimeout(()=>{ o.stop(); ctx.close(); }, duration);
     }
 
-    // ---- Core helpers ----
+    // ---- Helpers ----
     function segment(label, seconds, kind='other', detail='') { return { label, seconds, kind, detail }; }
     function ex(name, detail=''){ return { name, detail }; }
-    function transition(seconds=30, label='Transition / Setup') { return [segment(label, seconds, 'other', 'Set up quickly, sip water, adjust equipment.')]; }
+
+    function transition(seconds=30, label='Transition / Setup', detail='Quick setup, sip water, move on.') {
+      return [segment(label, seconds, 'other', detail)];
+    }
 
     // 3 rounds of (A 60s, Rest 30s, B 60s, Rest 30s) with no rest after final B
     function supersetBlock(a, b, work=60, rest=30, rounds=3) {
       const segs = [];
       for (let r=1; r<=rounds; r++) {
         segs.push(segment(`${a.name} — Round ${r}`, work, 'work', a.detail));
-        segs.push(segment(`Rest`, rest, 'rest', 'Breathe, shake out, set up next move.'));
+        segs.push(segment(`Rest`, rest, 'rest', 'Breathe, shake out.'));
         segs.push(segment(`${b.name} — Round ${r}`, work, 'work', b.detail));
-        if (r < rounds) segs.push(segment(`Rest`, rest, 'rest', 'Reset position, start next round strong.'));
+        if (r < rounds) segs.push(segment(`Rest`, rest, 'rest', 'Reset position, start next round.'));
       }
       return segs;
     }
 
-    // ---- Read settings ----
-    const locationSelect = document.getElementById('locationSelect');
-    const kneeFriendlyToggle = document.getElementById('kneeFriendlyToggle');
-    const benchGymInput = document.getElementById('benchGymInput');
-    const rowGymInput = document.getElementById('rowGymInput');
-
-    function readCtx(){
-      return {
-        location: locationSelect.value, // 'home' | 'gym'
-        kneeFriendly: kneeFriendlyToggle.checked,
-        gymBench: Number(benchGymInput.value) || 0,
-        gymRow: Number(rowGymInput.value) || 0,
-        homeMaxDB: 15
-      };
+    // Arms: 2 sets each (2 rounds), shorter intervals
+    function armsFinisherBlock(curl, tri, work=40, rest=20, sets=2) {
+      const segs = [];
+      for (let s=1; s<=sets; s++) {
+        segs.push(segment(`${curl.name} — Set ${s}`, work, 'work', curl.detail));
+        segs.push(segment(`Rest`, rest, 'rest', 'Relax grip, quick reset.'));
+        segs.push(segment(`${tri.name} — Set ${s}`, work, 'work', tri.detail));
+        if (s < sets) segs.push(segment(`Rest`, rest, 'rest', 'Shake out, start set 2.'));
+      }
+      return segs;
     }
 
-    // ---- Exercise selectors (adapt to Home equipment + Gym progress) ----
-    function warmup(ctx){
-      return ex(
-        'Warm‑up',
-        ctx.location === 'home'
-          ? '5 min: glute bridges, hip hinges, band lateral walks, gentle squat-to-chair'
-          : '5 min: easy cardio + dynamic mobility'
+    // ---- Exercise library (home equipment: 5/10/15 DBs, mini loop bands, ankle weights) ----
+    function warmupDetail(){
+      return '5 min: mini-band lateral walks + glute bridges + hip hinges + shoulder circles + squat-to-chair';
+    }
+
+    // Day 1
+    function day1Exercises(){
+      const squat = ex(
+        'DB Front Squat (or Goblet)',
+        'Use 2×15 or 1×15 goblet · 8–10 reps (not rushed). Leftover time: 5–10s bottom hold.'
       );
-    }
-
-    function frontSquat(ctx){
-      return ex(
-        'DB Front Squat',
-        ctx.location === 'home'
-          ? '2×15 lb front rack · 3s down + 1s pause (or goblet 15)'
-          : 'Choose challenging DB/KB · smooth reps'
-      );
-    }
-
-    function rdl(ctx){
-      return ex(
+      const rdl = ex(
         'DB Romanian Deadlift',
-        ctx.location === 'home'
-          ? '2×15 lb · 3s down · squeeze glutes at top'
-          : 'Heavier hinge · controlled reps'
+        '2×15 · 8–10 reps · 3s lower + 1s pause at stretch. Leftover time: hinge hold.'
       );
-    }
-
-    function chestPress(ctx){
-      const gym = ctx.gymBench || 25;
-      if (ctx.location === 'gym'){
-        return ex('DB Bench Press', `Target: 2×${gym} lb · stop 1–2 reps shy of failure`);
-      }
-      const needsScale = gym > ctx.homeMaxDB;
-      return ex(
+      const press = ex(
         'DB Floor Press',
-        needsScale
-          ? `2×15 lb · 3s down + 1s pause (Gym: 2×${gym})`
-          : `2×${gym} lb · steady reps`
+        '2×15 · 3s down + 1s pause on floor (this matched well for you). Stop 1–2 reps shy.'
       );
-    }
-
-    function oneArmRow(ctx){
-      const gym = ctx.gymRow || 25;
-      if (ctx.location === 'gym'){
-        return ex('One‑Arm DB Row', `${gym} lb · 2s squeeze at top`);
-      }
-      const needsScale = gym > ctx.homeMaxDB;
-      return ex(
-        'One‑Arm Row (DB + Band option)',
-        needsScale
-          ? `15 lb + band if possible · 2s squeeze (Gym: ${gym})`
-          : `${gym} lb · 2s squeeze`
+      const row = ex(
+        'One‑Arm DB Row',
+        '15 lb · 2s squeeze at top. If easy: 1.5 reps or 3s lower.'
       );
-    }
-
-    function arnoldPress(ctx){
-      return ex(
+      const arnold = ex(
         'Arnold Press',
-        ctx.location === 'home'
-          ? '10–15 lb · keep ribs down · slow control'
-          : 'Moderate-heavy · clean reps'
+        '10–15 lb · slow lower + short pause (you liked this). Keep ribs down.'
       );
+      const coreV = ex(
+        'Core V Exercise',
+        'Controlled reps. If too easy: add light ankle weights (0.5–2 lb/side).'
+      );
+      return { squat, rdl, press, row, arnold, coreV };
     }
 
-    function coreBlock(ctx){
-      return ex(
-        'Core: Dead Bug / Hollow',
-        ctx.location === 'home'
-          ? 'Ankle weights optional (1–2 lb/side) · slow + controlled'
-          : 'Controlled core work · no rushing'
+    // Day 2
+    function day2Exercises(){
+      const lunge = ex(
+        'Reverse Lunge (or Supported Split Squat)',
+        'Use bodyweight or 5–15 lb. Short stride, shin comfy. Lightly hold chair/wall if needed.'
       );
+      const slRdl = ex(
+        'Single‑Leg RDL',
+        '1×15 lb · 8–10 reps/side · slow + steady. Use chair for balance if needed.'
+      );
+      const pullApart = ex(
+        'Mini‑Band Pull‑Apart / Row‑Apart',
+        'Hold loop band and pull apart · 12–20 controlled reps. Squeeze upper back, no shrug.'
+      );
+      const push = ex(
+        'Push‑ups (elevated if needed)',
+        'Aim 6–15 reps. If time left: slow negatives or plank hold.'
+      );
+      const deadlift = ex(
+        'DB Sumo Deadlift (or Hinge)',
+        '2×15 · 8–10 reps. If time left: hinge hold 5–10s. Don’t rush reps.'
+      );
+      const sidePlank = ex(
+        'Side Plank + Arm Rotations',
+        'Slow rotations, stay stacked. Option: hold 5 lb DB for extra challenge.'
+      );
+      return { lunge, slRdl, pullApart, push, deadlift, sidePlank };
     }
 
-    // Day 2 swaps for knees at home
-    function lungeOrSwap(ctx){
-      if (ctx.location === 'gym' && !ctx.kneeFriendly){
-        return ex('Walking Lunge', 'Moderate DBs · tall torso · smooth steps');
-      }
-      return ex(
-        'Reverse Lunge / Split Squat',
-        '5–15 lb DBs · short stride, shin comfy · hold support if needed'
+    // Arms (end of both workouts)
+    function armsExercises(){
+      const curl = ex(
+        'Seated DB Curls (chair)',
+        'You felt this better: stay tall, elbows pinned. 10–12 reps, slow lower.'
       );
+      const tri = ex(
+        'DB Overhead Triceps Extension',
+        'Use 1×15 lb (two hands) or 1×10 if needed. 10–12 reps, slow lower.'
+      );
+      // alt: skull crushers on floor with 10–15s if overhead bothers shoulders
+      return { curl, tri };
     }
 
-    function singleLegSwap(ctx){
-      if (ctx.location === 'gym' && !ctx.kneeFriendly){
-        return ex('Single‑Leg Squat to Bench', 'Control down · light touch to bench');
-      }
-      return ex(
-        'Single‑Leg RDL (balance)',
-        '1×15 lb · hips square · reach back with free leg'
-      );
+    // ---- Finishers (optional) ----
+    function finisherDay1(){
+      // One quick round to keep time reasonable (arms are after)
+      const segs = [];
+      segs.push(...transition(10, 'Finisher Setup', 'Quick setup for a short conditioning hit.'));
+      segs.push(segment('Finisher: DB Swings / Fast Hip Hinge', 30, 'work', 'Use 1×15 lb or hinge fast without rounding back.'));
+      segs.push(segment('Transition', 10, 'rest', 'Switch.'));
+      segs.push(segment('Finisher: Side Plank (L)', 30, 'work', 'Stack hips/shoulders, breathe.'));
+      segs.push(segment('Transition', 10, 'rest', 'Switch.'));
+      segs.push(segment('Finisher: Side Plank (R)', 30, 'work', 'Stack hips/shoulders, breathe.'));
+      return segs;
     }
 
-    function triceps(ctx){
-      return ex(
-        ctx.location === 'gym' ? 'Cable Tricep Pressdown' : 'Band Tricep Pressdown',
-        ctx.location === 'gym'
-          ? 'Moderate-heavy · elbows pinned'
-          : 'Anchor band high · slow control · full lockout'
-      );
-    }
-
-    function biceps(ctx){
-      return ex(
-        'DB Bicep Curl',
-        ctx.location === 'home'
-          ? '10–15 lb · slow lowering · last 10s hold halfway'
-          : 'Moderate-heavy · clean reps'
-      );
-    }
-
-    function deadliftHinge(ctx){
-      return ex(
-        ctx.location === 'gym' ? 'KB Deadlift' : 'DB Sumo Deadlift / Hinge',
-        ctx.location === 'gym'
-          ? 'Go heavier than home · crisp bracing'
-          : '2×15 lb · add band if available · 3s down'
-      );
-    }
-
-    function sidePlankRot(ctx){
-      return ex(
-        'Side Plank + Reach/Rotate',
-        ctx.location === 'home'
-          ? 'Option: hold 5 lb DB · slow rotations'
-          : 'Controlled rotations · stay stacked'
-      );
-    }
-
-    function swingsOrHinge(ctx){
-      return ex(
-        ctx.location === 'gym' ? 'KB Swings' : 'DB Swings / Band Good‑Morning',
-        ctx.location === 'home'
-          ? '15 lb DB swing OR band hinge · snap hips, neutral back'
-          : 'Powerful hips · crisp reps'
-      );
-    }
-
-    function finisherCore(ctx){
-      return ex(
-        'Dead Bug (ankle weights optional)',
-        'Slow reps · exhale hard · keep low back down'
-      );
-    }
-
-    function finisherPull(ctx){
-      return ex(
-        ctx.location === 'gym' ? 'Face Pull / Row' : 'Band Row / Face Pull',
-        ctx.location === 'gym'
-          ? 'Cable/band · squeeze shoulder blades'
-          : 'Band · 2s squeeze · keep neck relaxed'
-      );
+    function finisherDay2(){
+      const segs = [];
+      segs.push(...transition(10, 'Finisher Setup', 'Quick 2–3 minute push before arms.'));
+      segs.push(segment('Finisher: Squat-to-Chair', 40, 'work', 'Controlled reps, tap chair lightly.'));
+      segs.push(segment('Transition', 10, 'rest', 'Switch.'));
+      segs.push(segment('Finisher: Push-ups (or incline)', 30, 'work', 'Clean reps or slow negatives.'));
+      segs.push(segment('Transition', 10, 'rest', 'Switch.'));
+      segs.push(segment('Finisher: Mini‑Band Lateral Walks', 40, 'work', 'Band above knees/ankles. Small steps, constant tension.'));
+      return segs;
     }
 
     // ---- Plans ----
-    function planDay1(includeFinisher=true, ctx){
+    function planDay1(includeFinisher=true, includeArms=true){
       const segs = [];
-      segs.push(segment('Warm‑up', 5*60, 'other', warmup(ctx).detail));
+      const d = day1Exercises();
+      const a = armsExercises();
 
-      segs.push(...supersetBlock(frontSquat(ctx), rdl(ctx)));
+      segs.push(segment('Warm‑up', 5*60, 'other', warmupDetail()));
+      segs.push(...supersetBlock(d.squat, d.rdl, 60, 30, 3));
       segs.push(...transition(30));
-
-      segs.push(...supersetBlock(chestPress(ctx), oneArmRow(ctx)));
+      segs.push(...supersetBlock(d.press, d.row, 60, 30, 3));
       segs.push(...transition(30));
+      segs.push(...supersetBlock(d.arnold, d.coreV, 60, 30, 3));
 
-      segs.push(...supersetBlock(arnoldPress(ctx), coreBlock(ctx)));
+      if (includeFinisher) segs.push(...finisherDay1());
 
-      if (includeFinisher) {
-        segs.push(...transition(10, 'Quick Setup'));
-        // Finisher: 2 rounds → (Swings 30s, 10s, Side Plank L 30s, 10s, Side Plank R 30s, 10s between rounds)
-        for (let r=1; r<=2; r++){
-          segs.push(segment(`Finisher R${r}: ${swingsOrHinge(ctx).name}`, 30, 'work', swingsOrHinge(ctx).detail));
-          segs.push(segment(`Transition`, 10, 'rest', 'Switch sides / set up.'));
-          segs.push(segment(`Finisher R${r}: Side Plank (L)`, 30, 'work', 'Stack hips/shoulders · breathe.'));
-          segs.push(segment(`Transition`, 10, 'rest', 'Switch sides.'));
-          segs.push(segment(`Finisher R${r}: Side Plank (R)`, 30, 'work', 'Stack hips/shoulders · breathe.'));
-          if (r<2) segs.push(segment(`Transition`, 10, 'rest', 'Shake out, start Round 2.'));
-        }
+      if (includeArms) {
+        segs.push(...transition(10, 'Arms Setup', 'Grab dumbbells and a chair.'));
+        segs.push(...armsFinisherBlock(a.curl, a.tri, 40, 20, 2));
       }
+
       return segs;
     }
 
-    function planDay2(includeFinisher=true, ctx){
+    function planDay2(includeFinisher=true, includeArms=true){
       const segs = [];
-      segs.push(segment('Warm‑up', 5*60, 'other', warmup(ctx).detail));
+      const d = day2Exercises();
+      const a = armsExercises();
 
-      segs.push(...supersetBlock(lungeOrSwap(ctx), singleLegSwap(ctx)));
+      segs.push(segment('Warm‑up', 5*60, 'other', warmupDetail()));
+      segs.push(...supersetBlock(d.lunge, d.slRdl, 60, 30, 3));
       segs.push(...transition(30));
-
-      segs.push(...supersetBlock(triceps(ctx), biceps(ctx)));
+      segs.push(...supersetBlock(d.pullApart, d.push, 60, 30, 3));
       segs.push(...transition(30));
+      segs.push(...supersetBlock(d.deadlift, d.sidePlank, 60, 30, 3));
 
-      segs.push(...supersetBlock(deadliftHinge(ctx), sidePlankRot(ctx)));
+      if (includeFinisher) segs.push(...finisherDay2());
 
-      if (includeFinisher) {
-        segs.push(...transition(10, 'Quick Setup'));
-        // Finisher: 2 rounds → 3 moves (3:50) + 10s setup = ~4:00
-        for (let r=1; r<=2; r++){
-          segs.push(segment(`Finisher R${r}: ${swingsOrHinge(ctx).name}`, 30, 'work', swingsOrHinge(ctx).detail));
-          segs.push(segment(`Transition`, 10, 'rest', 'Next move.'));
-          segs.push(segment(`Finisher R${r}: ${finisherCore(ctx).name}`, 30, 'work', finisherCore(ctx).detail));
-          segs.push(segment(`Transition`, 10, 'rest', 'Next move.'));
-          segs.push(segment(`Finisher R${r}: ${finisherPull(ctx).name}`, 30, 'work', finisherPull(ctx).detail));
-          if (r<2) segs.push(segment(`Transition`, 10, 'rest', 'Repeat.'));
-        }
+      if (includeArms) {
+        segs.push(...transition(10, 'Arms Setup', 'Grab dumbbells and a chair.'));
+        segs.push(...armsFinisherBlock(a.curl, a.tri, 40, 20, 2));
       }
+
       return segs;
     }
 
     const plans = {
-      'Day 1 — Strength & Core': planDay1,
-      'Day 2 — Knee‑Friendly Conditioning': planDay2,
+      'Day 1 — Strength + Core V': planDay1,
+      'Day 2 — Balance + Conditioning': planDay2,
     };
 
     // ---- State ----
@@ -452,6 +367,7 @@
     // ---- DOM ----
     const planSelect = document.getElementById('planSelect');
     const finisherToggle = document.getElementById('finisherToggle');
+    const armsToggle = document.getElementById('armsToggle');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -467,7 +383,6 @@
     const segmentList = document.getElementById('segmentList');
     const totalTime = document.getElementById('totalTime');
 
-    // Populate select
     Object.keys(plans).forEach(name => {
       const opt = document.createElement('option');
       opt.value = name; opt.textContent = name;
@@ -484,9 +399,9 @@
 
     function buildSegments(){
       const withFinisher = finisherToggle.checked;
-      const ctx = readCtx();
+      const withArms = armsToggle.checked;
 
-      segments = plans[currentPlanName](withFinisher, ctx);
+      segments = plans[currentPlanName](withFinisher, withArms);
       segIdx = 0;
       remaining = segments[0].seconds;
       updateUI();
@@ -572,19 +487,14 @@
     function pause(){ running = false; clearInterval(timer); }
     function reset(){ pause(); buildSegments(); }
 
-    // Events
     planSelect.addEventListener('change', (e)=>{ currentPlanName = e.target.value; reset(); });
     finisherToggle.addEventListener('change', reset);
-    locationSelect.addEventListener('change', reset);
-    kneeFriendlyToggle.addEventListener('change', reset);
-    benchGymInput.addEventListener('change', reset);
-    rowGymInput.addEventListener('change', reset);
+    armsToggle.addEventListener('change', reset);
 
     startBtn.addEventListener('click', start);
     pauseBtn.addEventListener('click', pause);
     resetBtn.addEventListener('click', reset);
 
-    // Init
     planSelect.value = currentPlanName;
     buildSegments();
   </script>

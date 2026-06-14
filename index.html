@@ -118,9 +118,9 @@
               <span class="muted">min</span>
             </label>
 
-            <label title="Adds a short conditioning block before arms.">
+            <label title="Adds a short optional finisher before arms.">
               <input type="checkbox" id="finisherToggle">
-              <span class="muted">Include Conditioning Finisher</span>
+              <span class="muted">Optional Finisher</span>
             </label>
 
             <label title="Adds 2 sets each at the end: Seated curls + triceps.">
@@ -203,6 +203,11 @@
     </div>
 
     <p class="small muted" style="margin-top:16px">
+      Every-other-day rotation: alternate <b>Day 1 Strength A</b> and <b>Day 2 Strength B</b>. Keep both strength-paced:
+      controlled reps, pauses, and clean form before adding harder variations.
+    </p>
+
+    <p class="small muted" style="margin-top:10px">
       Big-lift pacing tip (squat / RDL / deadlift): don’t rush to hit 12 reps in 60s. Aim <b>8–10 clean reps</b>,
       then use leftover time for a <b>5–10s hold</b> (bottom of squat or hinge hold). Presses can stay slow + paused.
     </p>
@@ -290,7 +295,7 @@
       return { squat, rdl, press, row, arnold, coreV };
     }
 
-    // Day 2
+    // Day 2: alternate strength day for every-other-day A/B rotation
     function day2Exercises(){
       const lunge = ex(
         'Reverse Lunge (or Supported Split Squat)',
@@ -337,7 +342,7 @@
     function finisherDay1(){
       // One quick round to keep time reasonable (arms are after)
       const segs = [];
-      segs.push(...transition(10, 'Finisher Setup', 'Quick setup for a short conditioning hit.'));
+      segs.push(...transition(10, 'Finisher Setup', 'Quick setup for a short optional push.'));
       segs.push(segment('Finisher: DB Swings / Fast Hip Hinge', 30, 'work', 'Use 1×15 lb or hinge fast without rounding back.'));
       segs.push(segment('Transition', 10, 'rest', 'Switch.'));
       segs.push(segment('Finisher: Side Plank (L)', 30, 'work', 'Stack hips/shoulders, breathe.'));
@@ -358,7 +363,7 @@
     }
 
     // ---- Plans ----
-    function planDay1(includeFinisher=true, includeArms=true, warmupSeconds=5*60){
+    function planDay1(includeFinisher=false, includeArms=true, warmupSeconds=5*60){
       const segs = [];
       const d = day1Exercises();
       const a = armsExercises();
@@ -381,7 +386,7 @@
       return segs;
     }
 
-    function planDay2(includeFinisher=true, includeArms=true, warmupSeconds=5*60){
+    function planDay2(includeFinisher=false, includeArms=true, warmupSeconds=5*60){
       const segs = [];
       const d = day2Exercises();
       const a = armsExercises();
@@ -405,8 +410,13 @@
     }
 
     const plans = {
-      'Day 1 — Strength + Core V': planDay1,
-      'Day 2 — Balance + Conditioning': planDay2,
+      'Day 1 — Strength A + Core V': planDay1,
+      'Day 2 — Strength B': planDay2,
+    };
+
+    const planAliases = {
+      'Day 1 — Strength + Core V': 'Day 1 — Strength A + Core V',
+      'Day 2 — Balance + Conditioning': 'Day 2 — Strength B',
     };
 
     const SETTINGS_KEY = 'homeSupersetTimer.settings';
@@ -507,7 +517,8 @@
 
     function applyStoredSettings(){
       const saved = readStored(SETTINGS_KEY, {});
-      if (plans[saved.plan]) currentPlanName = saved.plan;
+      const savedPlan = planAliases[saved.plan] || saved.plan;
+      if (plans[savedPlan]) currentPlanName = savedPlan;
       if (Number.isFinite(Number(saved.warmupMinutes))) warmupMinutes.value = saved.warmupMinutes;
       if (typeof saved.includeFinisher === 'boolean') finisherToggle.checked = saved.includeFinisher;
       if (typeof saved.includeArms === 'boolean') armsToggle.checked = saved.includeArms;

@@ -51,11 +51,15 @@
     .btn-warn { background: #8a661f; }
     .btn-danger { background: #7a2e2e; }
 
-    select, input[type="checkbox"] { accent-color: var(--accent); }
-    select {
+    select, input[type="checkbox"], input[type="number"] { accent-color: var(--accent); }
+    select, input[type="number"], input[type="text"], textarea {
       background: #1b2450; color: var(--text); border: 1px solid rgba(255,255,255,0.12);
       padding: 10px 12px; border-radius: 10px; font-weight:800; letter-spacing: 0.2px;
     }
+    input[type="number"] { width: 76px; }
+    input[type="text"], textarea { width: 100%; font: inherit; font-weight: 700; letter-spacing: 0; }
+    textarea { min-height: 72px; resize: vertical; }
+    input:disabled, textarea:disabled, button:disabled { opacity: 0.5; cursor: not-allowed; }
     label { display:flex; align-items:center; gap:8px; }
 
     .timer { display:grid; gap: 12px; grid-template-columns: 1fr; align-items: start; }
@@ -77,6 +81,13 @@
     .list { display:flex; flex-direction:column; gap:10px; }
     .list .item { display:flex; gap:10px; align-items:flex-start; padding: 8px 10px; border-radius: 12px; }
     .dot { width:10px; height:10px; border-radius:50%; background: var(--muted); opacity: 0.9; margin-top: 6px; }
+    .field-grid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; }
+    .field { display:flex; flex-direction:column; gap:6px; min-width: 0; }
+    .field span { font-size: 12px; color: var(--muted); font-weight: 800; }
+    .set-log { margin-top: 14px; }
+    .history-list { display:flex; flex-direction:column; gap:8px; }
+    .history-item { padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+    @media (max-width: 520px){ .field-grid { grid-template-columns: 1fr; } }
 
     .small { font-size: 13px; opacity: 0.92; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
@@ -101,6 +112,12 @@
               <select id="planSelect"></select>
             </label>
 
+            <label title="Set your warm-up from 2 to 12 minutes.">
+              <span class="muted">Warm‑up</span>
+              <input type="number" id="warmupMinutes" min="2" max="12" step="1" value="5">
+              <span class="muted">min</span>
+            </label>
+
             <label title="Adds a short conditioning block before arms.">
               <input type="checkbox" id="finisherToggle">
               <span class="muted">Include Conditioning Finisher</span>
@@ -113,8 +130,10 @@
           </div>
 
           <div class="controls">
+            <button id="backBtn">◀ Back</button>
             <button id="startBtn" class="btn-accent">▶ Start</button>
             <button id="pauseBtn" class="btn-warn">⏸ Pause</button>
+            <button id="skipBtn">Skip ▶</button>
             <button id="resetBtn" class="btn-danger">⟲ Reset</button>
           </div>
         </div>
@@ -143,6 +162,27 @@
             </div>
           </div>
         </div>
+
+        <div class="set-log stack">
+          <div class="line">
+            <div class="muted">Current Set Log</div>
+            <button id="saveSetBtn">Save Set</button>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>Weight</span>
+              <input type="text" id="weightInput" placeholder="2×15 lb">
+            </label>
+            <label class="field">
+              <span>Reps</span>
+              <input type="text" id="repsInput" placeholder="8–10">
+            </label>
+          </div>
+          <label class="field">
+            <span>Notes</span>
+            <textarea id="noteInput" placeholder="Tempo, form cue, or adjustment"></textarea>
+          </label>
+        </div>
       </section>
 
       <aside class="card">
@@ -152,6 +192,12 @@
             <div class="pill mono" id="totalTime">00:00 / 00:00</div>
           </div>
           <div class="list" id="segmentList"></div>
+          <div class="hr"></div>
+          <div class="line">
+            <div class="muted">Workout History</div>
+            <button id="finishSaveBtn" class="btn-accent">Finish + Save</button>
+          </div>
+          <div class="history-list" id="historyList"></div>
         </div>
       </aside>
     </div>
@@ -175,19 +221,23 @@
 
     // ---- Helpers ----
     function segment(label, seconds, kind='other', detail='') { return { label, seconds, kind, detail }; }
-    function ex(name, detail=''){ return { name, detail }; }
+    function ex(name, detail='', workSeconds=null){ return { name, detail, workSeconds }; }
 
     function transition(seconds=30, label='Transition / Setup', detail='Quick setup, sip water, move on.') {
       return [segment(label, seconds, 'other', detail)];
     }
 
-    // 3 rounds of (A 60s, Rest 30s, B 60s, Rest 30s) with no rest after final B
+    function workDuration(exercise, fallbackSeconds) {
+      return exercise.workSeconds || fallbackSeconds;
+    }
+
+    // 3 rounds of (A work, Rest 30s, B work, Rest 30s) with no rest after final B
     function supersetBlock(a, b, work=60, rest=30, rounds=3) {
       const segs = [];
       for (let r=1; r<=rounds; r++) {
-        segs.push(segment(`${a.name} — Round ${r}`, work, 'work', a.detail));
+        segs.push(segment(`${a.name} — Round ${r}`, workDuration(a, work), 'work', a.detail));
         segs.push(segment(`Rest`, rest, 'rest', 'Breathe, shake out.'));
-        segs.push(segment(`${b.name} — Round ${r}`, work, 'work', b.detail));
+        segs.push(segment(`${b.name} — Round ${r}`, workDuration(b, work), 'work', b.detail));
         if (r < rounds) segs.push(segment(`Rest`, rest, 'rest', 'Reset position, start next round.'));
       }
       return segs;
@@ -206,8 +256,8 @@
     }
 
     // ---- Exercise library (home equipment: 5/10/15 DBs, mini loop bands, ankle weights) ----
-    function warmupDetail(){
-      return '5 min: mini-band lateral walks + glute bridges + hip hinges + shoulder circles + squat-to-chair';
+    function warmupDetail(minutes){
+      return `${minutes} min: mini-band lateral walks + glute bridges + hip hinges + shoulder circles + squat-to-chair`;
     }
 
     // Day 1
@@ -230,7 +280,8 @@
       );
       const arnold = ex(
         'Arnold Press',
-        '10–15 lb · slow lower + short pause (you liked this). Keep ribs down.'
+        '10–15 lb · slow lower + short pause (you liked this). Keep ribs down.',
+        45
       );
       const coreV = ex(
         'Core V Exercise',
@@ -307,12 +358,13 @@
     }
 
     // ---- Plans ----
-    function planDay1(includeFinisher=true, includeArms=true){
+    function planDay1(includeFinisher=true, includeArms=true, warmupSeconds=5*60){
       const segs = [];
       const d = day1Exercises();
       const a = armsExercises();
+      const warmupMinutes = Math.round(warmupSeconds / 60);
 
-      segs.push(segment('Warm‑up', 5*60, 'other', warmupDetail()));
+      segs.push(segment('Warm‑up', warmupSeconds, 'other', warmupDetail(warmupMinutes)));
       segs.push(...supersetBlock(d.squat, d.rdl, 60, 30, 3));
       segs.push(...transition(30));
       segs.push(...supersetBlock(d.press, d.row, 60, 30, 3));
@@ -329,12 +381,13 @@
       return segs;
     }
 
-    function planDay2(includeFinisher=true, includeArms=true){
+    function planDay2(includeFinisher=true, includeArms=true, warmupSeconds=5*60){
       const segs = [];
       const d = day2Exercises();
       const a = armsExercises();
+      const warmupMinutes = Math.round(warmupSeconds / 60);
 
-      segs.push(segment('Warm‑up', 5*60, 'other', warmupDetail()));
+      segs.push(segment('Warm‑up', warmupSeconds, 'other', warmupDetail(warmupMinutes)));
       segs.push(...supersetBlock(d.lunge, d.slRdl, 60, 30, 3));
       segs.push(...transition(30));
       segs.push(...supersetBlock(d.pullApart, d.push, 60, 30, 3));
@@ -356,6 +409,10 @@
       'Day 2 — Balance + Conditioning': planDay2,
     };
 
+    const SETTINGS_KEY = 'homeSupersetTimer.settings';
+    const HISTORY_KEY = 'homeSupersetTimer.history';
+    const MAX_HISTORY = 8;
+
     // ---- State ----
     let currentPlanName = Object.keys(plans)[0];
     let segments = [];
@@ -363,14 +420,21 @@
     let remaining = 0;
     let running = false;
     let timer = null;
+    let setLogs = {};
+    let activeLogKey = null;
+    let currentWorkoutSaved = false;
 
     // ---- DOM ----
     const planSelect = document.getElementById('planSelect');
+    const warmupMinutes = document.getElementById('warmupMinutes');
     const finisherToggle = document.getElementById('finisherToggle');
     const armsToggle = document.getElementById('armsToggle');
+    const backBtn = document.getElementById('backBtn');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
+    const skipBtn = document.getElementById('skipBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const finishSaveBtn = document.getElementById('finishSaveBtn');
 
     const currentTitle = document.getElementById('currentTitle');
     const currentDetail = document.getElementById('currentDetail');
@@ -382,6 +446,11 @@
     const progressBar = document.getElementById('progressBar');
     const segmentList = document.getElementById('segmentList');
     const totalTime = document.getElementById('totalTime');
+    const weightInput = document.getElementById('weightInput');
+    const repsInput = document.getElementById('repsInput');
+    const noteInput = document.getElementById('noteInput');
+    const saveSetBtn = document.getElementById('saveSetBtn');
+    const historyList = document.getElementById('historyList');
 
     Object.keys(plans).forEach(name => {
       const opt = document.createElement('option');
@@ -389,23 +458,135 @@
       planSelect.appendChild(opt);
     });
 
+    function readStored(key, fallback){
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeStored(key, value){
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {
+        // Ignore storage failures; the timer should still work.
+      }
+    }
+
     function fmt(s){
       const m = Math.floor(s/60);
       const sec = s % 60;
       return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     }
 
+    function fmtDate(value){
+      return new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(value));
+    }
+
     function totalDuration(){ return segments.reduce((a,b)=>a+b.seconds,0); }
+
+    function currentSettings(){
+      return {
+        plan: currentPlanName,
+        warmupMinutes: Number(warmupMinutes.value) || 5,
+        includeFinisher: finisherToggle.checked,
+        includeArms: armsToggle.checked
+      };
+    }
+
+    function persistSettings(){
+      writeStored(SETTINGS_KEY, currentSettings());
+    }
+
+    function applyStoredSettings(){
+      const saved = readStored(SETTINGS_KEY, {});
+      if (plans[saved.plan]) currentPlanName = saved.plan;
+      if (Number.isFinite(Number(saved.warmupMinutes))) warmupMinutes.value = saved.warmupMinutes;
+      if (typeof saved.includeFinisher === 'boolean') finisherToggle.checked = saved.includeFinisher;
+      if (typeof saved.includeArms === 'boolean') armsToggle.checked = saved.includeArms;
+      planSelect.value = currentPlanName;
+    }
+
+    function warmupSeconds(){
+      const minutes = Number(warmupMinutes.value);
+      const bounded = Math.max(2, Math.min(12, Number.isFinite(minutes) ? minutes : 5));
+      warmupMinutes.value = bounded;
+      return bounded * 60;
+    }
+
+    function isValidWarmupInput(){
+      const minutes = Number(warmupMinutes.value);
+      return Number.isFinite(minutes) && minutes >= 2 && minutes <= 12;
+    }
 
     function buildSegments(){
       const withFinisher = finisherToggle.checked;
       const withArms = armsToggle.checked;
+      const warmup = warmupSeconds();
 
-      segments = plans[currentPlanName](withFinisher, withArms);
+      segments = plans[currentPlanName](withFinisher, withArms, warmup);
       segIdx = 0;
       remaining = segments[0].seconds;
+      setLogs = {};
+      activeLogKey = null;
+      currentWorkoutSaved = false;
+      persistSettings();
       updateUI();
       renderList();
+      renderHistory();
+    }
+
+    function logKey(seg){
+      return seg && seg.kind === 'work' ? seg.label : '';
+    }
+
+    function setLogInputsDisabled(disabled){
+      weightInput.disabled = disabled;
+      repsInput.disabled = disabled;
+      noteInput.disabled = disabled;
+      saveSetBtn.disabled = disabled;
+    }
+
+    function updateLogPanel(){
+      const seg = segments[segIdx];
+      const key = logKey(seg);
+      if (key === activeLogKey && weightInput.disabled === !key) return;
+
+      activeLogKey = key;
+      setLogInputsDisabled(!key);
+
+      const log = key ? setLogs[key] || {} : {};
+      weightInput.value = log.weight || '';
+      repsInput.value = log.reps || '';
+      noteInput.value = log.note || '';
+    }
+
+    function saveCurrentSet(){
+      const seg = segments[segIdx];
+      const key = logKey(seg);
+      if (!key) return;
+
+      const log = {
+        exercise: seg.label,
+        weight: weightInput.value.trim(),
+        reps: repsInput.value.trim(),
+        note: noteInput.value.trim()
+      };
+
+      if (log.weight || log.reps || log.note) {
+        setLogs[key] = log;
+      } else {
+        delete setLogs[key];
+      }
+      renderList();
+      updateUI();
     }
 
     function updateUI(){
@@ -437,6 +618,11 @@
         el.style.borderLeft = i===segIdx ? '4px solid var(--accent)' : '4px solid transparent';
         el.style.background = i===segIdx ? 'rgba(113,229,189,0.08)' : 'transparent';
       });
+
+      backBtn.disabled = segIdx === 0 && remaining === segSeconds;
+      skipBtn.disabled = segIdx >= segments.length - 1;
+      finishSaveBtn.disabled = currentWorkoutSaved;
+      updateLogPanel();
     }
 
     function renderList(){
@@ -450,16 +636,135 @@
         row.appendChild(dot);
 
         const text = document.createElement('div');
-        const detailLine = s.detail ? `<div class="small muted" style="margin-top:2px">${s.detail}</div>` : '';
-        text.innerHTML = `
-          <div style="font-weight:800">${s.label}</div>
-          ${detailLine}
-          <div class="small muted" style="margin-top:2px">${fmt(s.seconds)} · ${s.kind.toUpperCase()}</div>
-        `;
+        const title = document.createElement('div');
+        title.style.fontWeight = '800';
+        title.textContent = s.label;
+        text.appendChild(title);
+
+        if (s.detail) {
+          const detail = document.createElement('div');
+          detail.className = 'small muted';
+          detail.style.marginTop = '2px';
+          detail.textContent = s.detail;
+          text.appendChild(detail);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'small muted';
+        meta.style.marginTop = '2px';
+        meta.textContent = `${fmt(s.seconds)} · ${s.kind.toUpperCase()}`;
+        text.appendChild(meta);
+
+        const log = setLogs[logKey(s)];
+        if (log) {
+          const logLine = document.createElement('div');
+          logLine.className = 'small';
+          logLine.style.marginTop = '4px';
+          logLine.textContent = ['Saved', log.weight, log.reps, log.note].filter(Boolean).join(' · ');
+          text.appendChild(logLine);
+        }
+
         row.appendChild(text);
 
         segmentList.appendChild(row);
       });
+    }
+
+    function setCurrentSegment(index){
+      const nextIndex = Math.max(0, Math.min(segments.length - 1, index));
+      segIdx = nextIndex;
+      remaining = segments[segIdx].seconds;
+      activeLogKey = null;
+      updateUI();
+    }
+
+    function previousSegment(){
+      if (segIdx === 0) {
+        remaining = segments[0].seconds;
+      } else {
+        setCurrentSegment(segIdx - 1);
+        return;
+      }
+      updateUI();
+    }
+
+    function skipSegment(){
+      if (segIdx >= segments.length - 1) return;
+      setCurrentSegment(segIdx + 1);
+    }
+
+    function readHistory(){
+      const history = readStored(HISTORY_KEY, []);
+      return Array.isArray(history) ? history : [];
+    }
+
+    function renderHistory(){
+      const history = readHistory();
+      historyList.innerHTML = '';
+
+      if (!history.length) {
+        const empty = document.createElement('div');
+        empty.className = 'small muted';
+        empty.textContent = 'No saved workouts yet.';
+        historyList.appendChild(empty);
+        return;
+      }
+
+      history.slice(0, MAX_HISTORY).forEach((entry)=>{
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        const title = document.createElement('div');
+        title.style.fontWeight = '800';
+        title.textContent = `${entry.plan} · ${fmt(entry.totalSeconds)}`;
+        item.appendChild(title);
+
+        const meta = document.createElement('div');
+        meta.className = 'small muted';
+        meta.style.marginTop = '2px';
+        meta.textContent = `${fmtDate(entry.completedAt)} · ${entry.setCount} saved sets`;
+        item.appendChild(meta);
+
+        if (entry.summary) {
+          const summary = document.createElement('div');
+          summary.className = 'small';
+          summary.style.marginTop = '4px';
+          summary.textContent = entry.summary;
+          item.appendChild(summary);
+        }
+
+        historyList.appendChild(item);
+      });
+    }
+
+    function saveWorkoutHistory(auto=false){
+      if (currentWorkoutSaved) return;
+
+      saveCurrentSet();
+      const logs = Object.values(setLogs);
+      const summary = logs.slice(0, 3).map((log)=>{
+        const metrics = [log.weight, log.reps].filter(Boolean).join(' / ');
+        return metrics ? `${log.exercise}: ${metrics}` : log.exercise;
+      }).join(' · ');
+
+      const entry = {
+        completedAt: new Date().toISOString(),
+        plan: currentPlanName,
+        totalSeconds: totalDuration(),
+        warmupMinutes: Number(warmupMinutes.value),
+        includeFinisher: finisherToggle.checked,
+        includeArms: armsToggle.checked,
+        setCount: logs.length,
+        summary,
+        logs
+      };
+
+      const history = [entry, ...readHistory()].slice(0, MAX_HISTORY);
+      writeStored(HISTORY_KEY, history);
+      currentWorkoutSaved = true;
+      renderHistory();
+      updateUI();
+      if (!auto) tone(220, 880, 'sine', 0.2);
     }
 
     function tick(){
@@ -474,6 +779,7 @@
           running = false;
           clearInterval(timer);
           updateUI();
+          saveWorkoutHistory(true);
           tone(500, 660, 'sine', 0.3);
           setTimeout(()=>tone(600, 880, 'sine', 0.3), 100);
           return;
@@ -488,14 +794,20 @@
     function reset(){ pause(); buildSegments(); }
 
     planSelect.addEventListener('change', (e)=>{ currentPlanName = e.target.value; reset(); });
+    warmupMinutes.addEventListener('input', ()=>{ if (isValidWarmupInput()) reset(); });
+    warmupMinutes.addEventListener('change', reset);
     finisherToggle.addEventListener('change', reset);
     armsToggle.addEventListener('change', reset);
 
+    backBtn.addEventListener('click', previousSegment);
     startBtn.addEventListener('click', start);
     pauseBtn.addEventListener('click', pause);
+    skipBtn.addEventListener('click', skipSegment);
     resetBtn.addEventListener('click', reset);
+    saveSetBtn.addEventListener('click', saveCurrentSet);
+    finishSaveBtn.addEventListener('click', ()=>saveWorkoutHistory(false));
 
-    planSelect.value = currentPlanName;
+    applyStoredSettings();
     buildSegments();
   </script>
 </body>
